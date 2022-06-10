@@ -1,8 +1,9 @@
 package antifraud.Controller;
 
 import antifraud.DeleteEntity;
+import antifraud.Models.ResponseRole;
 import antifraud.Service.UserService;
-import antifraud.User.User;
+import antifraud.Models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,11 @@ public class UserController {
     @DeleteMapping("/user/{username}")
     public ResponseEntity<DeleteEntity> deleteUser(@PathVariable String username) {
         return userService.deleteUser(username);
+    }
+
+    @PutMapping("/role")
+    public ResponseEntity<User> changeUserRole(ResponseRole newUserRole) {
+        return userService.changeUserRole(newUserRole);
     }
 
 }

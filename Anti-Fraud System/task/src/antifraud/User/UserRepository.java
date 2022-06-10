@@ -1,5 +1,6 @@
 package antifraud.User;
 
+import antifraud.Models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {

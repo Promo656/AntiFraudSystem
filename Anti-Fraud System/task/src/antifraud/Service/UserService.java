@@ -1,7 +1,9 @@
 package antifraud.Service;
 
 import antifraud.DeleteEntity;
-import antifraud.User.User;
+import antifraud.Enums.Roles;
+import antifraud.Models.ResponseRole;
+import antifraud.Models.User;
 import antifraud.User.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class UserService {
@@ -22,8 +25,10 @@ public class UserService {
     public ResponseEntity<User> register(User user) {
         User checkedUser = repository.findUserByUsername(user.getUsername().toLowerCase());
         if (checkedUser == null) {
+            Roles role = repository.findAll().size() > 0 ? Roles.MERCHANT : Roles.ADMINISTRATOR;
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setUsername(user.getUsername().toLowerCase());
+            user.setRole(role.toString());
             repository.save(user);
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         }
@@ -42,6 +47,18 @@ public class UserService {
             return new ResponseEntity<>(new DeleteEntity(username), HttpStatus.OK);
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    public ResponseEntity<User> changeUserRole(ResponseRole newUserRole) {
+        User user = repository.findUserByUsername(newUserRole.getUsername());
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        } else if (!Objects.equals(user.getRole(), Roles.ADMINISTRATOR.toString())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        } else if (user.getRole().equals(newUserRole.getRole())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
+        }
+        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
 }

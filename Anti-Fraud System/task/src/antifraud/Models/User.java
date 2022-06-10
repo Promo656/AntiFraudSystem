@@ -1,4 +1,4 @@
-package antifraud.User;
+package antifraud.Models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -14,13 +14,12 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
     @NotEmpty(message = "Name must not be empty")
-    @Column
     private String name;
     @NotEmpty(message = "Username must not be empty")
-    @Column
     private String username;
     @NotEmpty(message = "Password must not be empty")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column
     private String password;
+
+    private String role;
 }

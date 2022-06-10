@@ -26,6 +26,7 @@ public class WebSecurityImpl extends WebSecurityConfigurerAdapter {
         http.authorizeRequests()
                 .mvcMatchers("/api/auth/user").permitAll()
                 .mvcMatchers("/api/antifraud/transaction", "/api/auth/list").authenticated()
+                .mvcMatchers("/api/auth/role").hasRole("ADMIN")
                 .anyRequest().permitAll()
                 .and()
                 .csrf().disable().headers().frameOptions().disable()
