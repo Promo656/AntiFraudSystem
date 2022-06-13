@@ -20,6 +20,8 @@ public class User {
     @NotEmpty(message = "Password must not be empty")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
-
     private String role;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "isNonLocket")
+    private boolean isAccountNonLocked;
 }

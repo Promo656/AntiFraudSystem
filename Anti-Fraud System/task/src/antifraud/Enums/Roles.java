@@ -1,8 +1,8 @@
 package antifraud.Enums;
 
 public enum Roles {
-    ADMINISTRATOR,
-    MERCHANT,
-    SUPPORT,
-    ANONYMOUS
+    ROLE_ADMINISTRATOR,
+    ROLE_MERCHANT,
+    ROLE_SUPPORT,
+    ROLE_ANONYMOUS
 }

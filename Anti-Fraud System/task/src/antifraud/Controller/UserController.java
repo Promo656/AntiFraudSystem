@@ -1,7 +1,8 @@
 package antifraud.Controller;
 
 import antifraud.DeleteEntity;
-import antifraud.Models.ResponseRole;
+import antifraud.Models.RequestAccess;
+import antifraud.Models.RequestRole;
 import antifraud.Service.UserService;
 import antifraud.Models.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -33,8 +35,13 @@ public class UserController {
     }
 
     @PutMapping("/role")
-    public ResponseEntity<User> changeUserRole(ResponseRole newUserRole) {
+    public ResponseEntity<User> changeUserRole(@RequestBody RequestRole newUserRole) {
         return userService.changeUserRole(newUserRole);
+    }
+
+    @PutMapping("/access")
+    public ResponseEntity<Map<String,String>> details(@RequestBody RequestAccess newUserAccess) {
+        return userService.changeUserAccess(newUserAccess);
     }
 
 }

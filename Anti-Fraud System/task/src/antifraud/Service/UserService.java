@@ -1,8 +1,10 @@
 package antifraud.Service;
 
 import antifraud.DeleteEntity;
+import antifraud.Enums.Access;
 import antifraud.Enums.Roles;
-import antifraud.Models.ResponseRole;
+import antifraud.Models.RequestAccess;
+import antifraud.Models.RequestRole;
 import antifraud.Models.User;
 import antifraud.User.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Component
@@ -25,10 +28,12 @@ public class UserService {
     public ResponseEntity<User> register(User user) {
         User checkedUser = repository.findUserByUsername(user.getUsername().toLowerCase());
         if (checkedUser == null) {
-            Roles role = repository.findAll().size() > 0 ? Roles.MERCHANT : Roles.ADMINISTRATOR;
+            boolean isAdmin = !(repository.findAll().size() > 0);
+            Roles role = isAdmin ? Roles.ROLE_ADMINISTRATOR : Roles.ROLE_MERCHANT;
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setUsername(user.getUsername().toLowerCase());
             user.setRole(role.toString());
+            user.setAccountNonLocked(isAdmin);
             repository.save(user);
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         }
@@ -49,16 +54,32 @@ public class UserService {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    public ResponseEntity<User> changeUserRole(ResponseRole newUserRole) {
+    public ResponseEntity<User> changeUserRole(RequestRole newUserRole) {
         User user = repository.findUserByUsername(newUserRole.getUsername());
+        String newRole = "ROLE_" + newUserRole.getRole();
+        List<String> roles = List.of(Roles.ROLE_MERCHANT.toString(), Roles.ROLE_SUPPORT.toString());
+
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        } else if (!Objects.equals(user.getRole(), Roles.ADMINISTRATOR.toString())) {
+        } else if (!roles.contains(newRole)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         } else if (user.getRole().equals(newUserRole.getRole())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT);
         }
+        user.setRole(newRole);
+        repository.save(user);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
+    public ResponseEntity<Map<String, String>> changeUserAccess(RequestAccess newUserAccess) {
+        User user = repository.findUserByUsername(newUserAccess.getUsername());
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        boolean isNonLocked = !Objects.equals(newUserAccess.getOperation(), Access.LOCK.toString());
+        user.setAccountNonLocked(isNonLocked);
+        repository.save(user);
+        String response = String.format("User %s %s!", user.getUsername(), newUserAccess.getOperation());
+        return new ResponseEntity<>(Map.of("status",response), HttpStatus.OK);
+    }
 }

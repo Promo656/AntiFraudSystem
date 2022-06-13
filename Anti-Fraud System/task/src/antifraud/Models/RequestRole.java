@@ -2,11 +2,12 @@ package antifraud.Models;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-public class ResponseRole {
+@NoArgsConstructor
+public class RequestRole {
     private String username;
     private String role;
-
 }

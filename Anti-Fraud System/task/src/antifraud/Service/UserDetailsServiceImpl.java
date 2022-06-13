@@ -1,7 +1,7 @@
 package antifraud.Service;
 
-import antifraud.User.UserRepository;
 import antifraud.Models.User;
+import antifraud.User.UserRepository;
 import antifraud.User.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
