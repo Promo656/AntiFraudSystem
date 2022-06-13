@@ -29,7 +29,7 @@ public class UserService {
         User checkedUser = repository.findUserByUsername(user.getUsername().toLowerCase());
         if (checkedUser == null) {
             boolean isAdmin = !(repository.findAll().size() > 0);
-            Roles role = isAdmin ? Roles.ROLE_ADMINISTRATOR : Roles.ROLE_MERCHANT;
+            Roles role = isAdmin ? Roles.ADMINISTRATOR : Roles.MERCHANT;
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setUsername(user.getUsername().toLowerCase());
             user.setRole(role.toString());
@@ -56,8 +56,8 @@ public class UserService {
 
     public ResponseEntity<User> changeUserRole(RequestRole newUserRole) {
         User user = repository.findUserByUsername(newUserRole.getUsername());
-        String newRole = "ROLE_" + newUserRole.getRole();
-        List<String> roles = List.of(Roles.ROLE_MERCHANT.toString(), Roles.ROLE_SUPPORT.toString());
+        String newRole = newUserRole.getRole();
+        List<String> roles = List.of(Roles.MERCHANT.toString(), Roles.SUPPORT.toString());
 
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -79,7 +79,8 @@ public class UserService {
         boolean isNonLocked = !Objects.equals(newUserAccess.getOperation(), Access.LOCK.toString());
         user.setAccountNonLocked(isNonLocked);
         repository.save(user);
-        String response = String.format("User %s %s!", user.getUsername(), newUserAccess.getOperation());
-        return new ResponseEntity<>(Map.of("status",response), HttpStatus.OK);
+        String status = Objects.equals(newUserAccess.getOperation(), Access.LOCK.toString()) ? "locked" : "unlocked";
+        String response = String.format("User %s %s!", user.getUsername(), status);
+        return new ResponseEntity<>(Map.of("status", response), HttpStatus.OK);
     }
 }
