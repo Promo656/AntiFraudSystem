@@ -3,6 +3,7 @@ package antifraud.Controller;
 import antifraud.DeleteEntity;
 import antifraud.Models.RequestAccess;
 import antifraud.Models.RequestRole;
+import antifraud.Models.ResponseOperationStatus;
 import antifraud.Service.UserService;
 import antifraud.Models.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class UserController {
     }
 
     @PutMapping("/access")
-    public ResponseEntity<Map<String,String>> details(@RequestBody RequestAccess newUserAccess) {
+    public ResponseEntity<ResponseOperationStatus> details(@RequestBody RequestAccess newUserAccess) {
         return userService.changeUserAccess(newUserAccess);
     }
 

@@ -1,4 +1,4 @@
-package antifraud.User;
+package antifraud.Repositories;
 
 import antifraud.Models.User;
 import org.springframework.data.jpa.repository.JpaRepository;

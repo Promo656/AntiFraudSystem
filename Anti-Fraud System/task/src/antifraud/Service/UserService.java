@@ -5,8 +5,9 @@ import antifraud.Enums.Access;
 import antifraud.Enums.Roles;
 import antifraud.Models.RequestAccess;
 import antifraud.Models.RequestRole;
+import antifraud.Models.ResponseOperationStatus;
 import antifraud.Models.User;
-import antifraud.User.UserRepository;
+import antifraud.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @Component
@@ -71,7 +71,7 @@ public class UserService {
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
-    public ResponseEntity<Map<String, String>> changeUserAccess(RequestAccess newUserAccess) {
+    public ResponseEntity<ResponseOperationStatus> changeUserAccess(RequestAccess newUserAccess) {
         User user = repository.findUserByUsername(newUserAccess.getUsername());
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -80,7 +80,7 @@ public class UserService {
         user.setAccountNonLocked(isNonLocked);
         repository.save(user);
         String status = Objects.equals(newUserAccess.getOperation(), Access.LOCK.toString()) ? "locked" : "unlocked";
-        String response = String.format("User %s %s!", user.getUsername(), status);
-        return new ResponseEntity<>(Map.of("status", response), HttpStatus.OK);
+        String msg = String.format("User %s %s!", user.getUsername(), status);
+        return new ResponseEntity<>(new ResponseOperationStatus(msg), HttpStatus.OK);
     }
 }

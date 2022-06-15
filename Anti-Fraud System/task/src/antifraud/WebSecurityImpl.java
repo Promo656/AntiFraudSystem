@@ -26,10 +26,20 @@ public class WebSecurityImpl extends WebSecurityConfigurerAdapter {
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
                 .mvcMatchers("/api/antifraud/transaction").hasAuthority("MERCHANT")
+
+                .mvcMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip").hasAnyAuthority("SUPPORT")
+                .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/suspicious-ip/*").hasAnyAuthority("SUPPORT")
+                .mvcMatchers(HttpMethod.GET, "/api/antifraud/suspicious-ip").hasAnyAuthority("SUPPORT")
+
+                .mvcMatchers(HttpMethod.POST, "/api/antifraud/stolencard").hasAnyAuthority("SUPPORT")
+                .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/stolencard/*").hasAnyAuthority("SUPPORT")
+                .mvcMatchers(HttpMethod.GET, "/api/antifraud/stolencard").hasAnyAuthority("SUPPORT")
+
                 .mvcMatchers(HttpMethod.PUT, "/api/auth/role", "/api/auth/access").hasAuthority("ADMINISTRATOR")
                 .mvcMatchers(HttpMethod.DELETE, "/api/auth/user/*").hasAuthority("ADMINISTRATOR")
                 .mvcMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
                 .mvcMatchers("/api/auth/list").hasAnyAuthority("SUPPORT", "ADMINISTRATOR")
+
                 .and()
                 .csrf().disable().headers().frameOptions().disable()
                 .and().httpBasic();
