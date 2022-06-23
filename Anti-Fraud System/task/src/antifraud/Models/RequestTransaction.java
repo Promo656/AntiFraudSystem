@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -16,4 +17,8 @@ public class RequestTransaction {
     private String ip;
     @NotEmpty
     private String number;
+    @NotEmpty
+    private String region;
+    @NotEmpty
+    private LocalDate date;
 }

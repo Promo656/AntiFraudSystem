@@ -1,4 +1,4 @@
-package antifraud;
+package antifraud.Config;
 
 import antifraud.Service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,3 +50,4 @@ public class WebSecurityImpl extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
 }
+

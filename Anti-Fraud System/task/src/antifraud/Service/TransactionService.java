@@ -13,10 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TransactionService {
@@ -57,11 +54,25 @@ public class TransactionService {
         stolenCardRepository.delete(card);
     }
 
+    private boolean checkCardNumber(String value) {
+        int sum = Character.getNumericValue(value.charAt(value.length() - 1));
+        int parity = value.length() % 2;
+        for (int i = value.length() - 2; i >= 0; i--) {
+            int summand = Character.getNumericValue(value.charAt(i));
+            if (i % 2 == parity) {
+                int product = summand * 2;
+                summand = (product > 9) ? (product - 9) : product;
+            }
+            sum += summand;
+        }
+        return (sum % 10) == 0;
+    }
+
     public ResponseEntity<ResponseTransaction> transaction(RequestTransaction transaction) {
         Enum<TransactionStatus> result;
         List<String> info = new ArrayList<>();
 
-        if ( transaction.getAmount() <= 0) {
+        if (transaction.getAmount() == null || transaction.getAmount() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         } else if (transaction.getAmount() <= 200) {
             result = TransactionStatus.ALLOWED;
@@ -78,6 +89,11 @@ public class TransactionService {
         if (ip != null) {
             info.add("ip");
             info.remove("none");
+            info.remove("amount");
+            if (transaction.getAmount() >= 1500) {
+                result = TransactionStatus.MANUAL_PROCESSING;
+                info.add("amount");
+            }
             result = TransactionStatus.PROHIBITED;
         }
 
@@ -85,9 +101,15 @@ public class TransactionService {
         if (card != null) {
             info.add("card-number");
             info.remove("none");
+            info.remove("amount");
+            if (transaction.getAmount() >= 1500) {
+                result = TransactionStatus.MANUAL_PROCESSING;
+                info.add("amount");
+            }
             result = TransactionStatus.PROHIBITED;
         }
-        return new ResponseEntity<>(new ResponseTransaction(result, info.toString()), HttpStatus.OK);
+        Collections.sort(info);
+        return new ResponseEntity<>(new ResponseTransaction(result, String.join(", ", info)), HttpStatus.OK);
 
     }
 
@@ -102,6 +124,9 @@ public class TransactionService {
     }
 
     public ResponseEntity<ResponseOperationStatus> deleteIp(String ip) {
+        if (!ip.matches(Regex.IP_REGEX)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
         IP searchedIp = findIp(ip);
         if (searchedIp != null) {
             String msg = String.format("IP %s successfully removed!", ip);
@@ -117,6 +142,9 @@ public class TransactionService {
     }
 
     public ResponseEntity<Card> addCard(Card card) {
+        if (!checkCardNumber(card.getNumber())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
         Card searchedCard = findCard(card.getNumber());
         if (searchedCard == null) {
             saveCard(card);
@@ -126,6 +154,9 @@ public class TransactionService {
     }
 
     public ResponseEntity<ResponseOperationStatus> deleteCard(String number) {
+        if (!checkCardNumber(number)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
         Card searchedCard = findCard(number);
         if (searchedCard != null) {
             String msg = String.format("Card %s successfully removed!", number);

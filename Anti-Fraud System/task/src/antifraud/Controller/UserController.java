@@ -1,6 +1,6 @@
 package antifraud.Controller;
 
-import antifraud.DeleteEntity;
+import antifraud.Models.DeleteEntity;
 import antifraud.Models.RequestAccess;
 import antifraud.Models.RequestRole;
 import antifraud.Models.ResponseOperationStatus;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")

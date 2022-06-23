@@ -8,6 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
 
 @Entity
 @Data
@@ -18,5 +19,6 @@ public class Card {
     @GeneratedValue
     private int id;
     @NotEmpty
+    @Pattern(regexp = "\\d{16}")
     private String number;
 }

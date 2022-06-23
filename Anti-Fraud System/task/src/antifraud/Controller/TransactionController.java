@@ -1,6 +1,5 @@
 package antifraud.Controller;
 
-import antifraud.Enums.TransactionStatus;
 import antifraud.Models.*;
 import antifraud.Service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/antifraud")
@@ -28,7 +26,7 @@ public class TransactionController {
     }
 
     @DeleteMapping("/suspicious-ip/{ip}")
-    public ResponseEntity<ResponseOperationStatus> deleteIp(@PathVariable String ip) {
+    public ResponseEntity<ResponseOperationStatus> deleteIp(@Valid @PathVariable String ip) {
         return transactionService.deleteIp(ip);
     }
 

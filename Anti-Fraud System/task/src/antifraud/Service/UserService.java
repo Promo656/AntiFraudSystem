@@ -1,6 +1,6 @@
 package antifraud.Service;
 
-import antifraud.DeleteEntity;
+import antifraud.Models.DeleteEntity;
 import antifraud.Enums.Access;
 import antifraud.Enums.Roles;
 import antifraud.Models.RequestAccess;
