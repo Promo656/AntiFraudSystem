@@ -4,14 +4,21 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.NotEmpty;
-import java.time.LocalDate;
+import javax.validation.constraints.NotNull;
 
+@Entity(name = "Transaction")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class RequestTransaction {
-    @NotEmpty
+    @Id
+    @GeneratedValue
+    private int id;
+    @NotNull
     private Long amount;
     @NotEmpty
     private String ip;
@@ -20,5 +27,5 @@ public class RequestTransaction {
     @NotEmpty
     private String region;
     @NotEmpty
-    private LocalDate date;
+    private String date;
 }

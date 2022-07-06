@@ -16,7 +16,7 @@ public class TransactionController {
     TransactionService transactionService;
 
     @PostMapping("/transaction")
-    public ResponseEntity<ResponseTransaction> transaction(@RequestBody RequestTransaction transaction) {
+    public ResponseEntity<ResponseTransaction> transaction(@Valid @RequestBody RequestTransaction transaction) {
         return transactionService.transaction(transaction);
     }
 

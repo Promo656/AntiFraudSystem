@@ -4,6 +4,7 @@ import antifraud.Enums.TransactionStatus;
 import antifraud.Models.*;
 import antifraud.Repositories.IPsRepository;
 import antifraud.Repositories.StolenCardRepository;
+import antifraud.Repositories.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,9 @@ public class TransactionService {
     IPsRepository iPsRepository;
     @Autowired
     StolenCardRepository stolenCardRepository;
+
+    @Autowired
+    TransactionRepository transactionRepository;
 
     private IP findIp(String ip) {
         return iPsRepository.findByIp(ip);
@@ -69,6 +73,7 @@ public class TransactionService {
     }
 
     public ResponseEntity<ResponseTransaction> transaction(RequestTransaction transaction) {
+        transactionRepository.save(transaction);
         Enum<TransactionStatus> result;
         List<String> info = new ArrayList<>();
 
@@ -108,6 +113,8 @@ public class TransactionService {
             }
             result = TransactionStatus.PROHIBITED;
         }
+
+
         Collections.sort(info);
         return new ResponseEntity<>(new ResponseTransaction(result, String.join(", ", info)), HttpStatus.OK);
 
