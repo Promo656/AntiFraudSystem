@@ -1,5 +1,6 @@
 package antifraud.Models;
 
+import antifraud.Enums.WorldRegion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 
 @Entity(name = "Transaction")
 @Data
@@ -24,8 +26,8 @@ public class RequestTransaction {
     private String ip;
     @NotEmpty
     private String number;
-    @NotEmpty
-    private String region;
-    @NotEmpty
-    private String date;
+    @NotNull
+    private WorldRegion region;
+    @NotNull
+    private LocalDateTime date;
 }

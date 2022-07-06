@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -72,8 +73,86 @@ public class TransactionService {
         return (sum % 10) == 0;
     }
 
-    public ResponseEntity<ResponseTransaction> transaction(RequestTransaction transaction) {
+
+    public ResponseEntity<ResponseTransaction> checkTransaction(RequestTransaction transaction) {
+        Enum<TransactionStatus> checkResult = null;
+        List<String> checkInfo = new ArrayList<>();
+
+        Card findCard = stolenCardRepository.findCardByNumber(transaction.getNumber());
+        IP findIp = iPsRepository.findByIp(transaction.getIp());
+
+        if (!checkCardNumber(transaction.getNumber())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        if (findCard != null) {
+            checkResult = TransactionStatus.PROHIBITED;
+            checkInfo.add("card-number");
+        }
+
+        if (findIp != null) {
+            checkResult = TransactionStatus.PROHIBITED;
+            checkInfo.add("ip");
+        }
+
+        Long transactionsWithDistinctRegionCount =
+                transactionRepository.getTransactionsWithDistinctRegionCount(
+                        transaction.getRegion(),
+                        transaction.getNumber(),
+                        transaction.getDate().minusHours(1),
+                        transaction.getDate()
+                );
+
+        if (transactionsWithDistinctRegionCount > 1) {
+            checkInfo.add("region-correlation");
+
+            if (transactionsWithDistinctRegionCount == 2) {
+                checkResult = TransactionStatus.MANUAL_PROCESSING;
+            } else {
+                checkResult = TransactionStatus.PROHIBITED;
+            }
+        }
+
+        Long transactionsWithDistinctIpCount =
+                transactionRepository.getTransactionsWithDistinctIpCount(
+                        transaction.getIp(),
+                        transaction.getNumber(),
+                        transaction.getDate().minusHours(1),
+                        transaction.getDate()
+                );
+
+        if (transactionsWithDistinctIpCount > 1) {
+            checkInfo.add("ip-correlation");
+
+            if (transactionsWithDistinctIpCount == 2) {
+                checkResult = TransactionStatus.MANUAL_PROCESSING;
+            } else {
+                checkResult = TransactionStatus.PROHIBITED;
+            }
+        }
+
+        if (transaction.getAmount() > 1500) {
+            checkResult = TransactionStatus.PROHIBITED;
+            checkInfo.add("amount");
+        }
+
+        if (checkResult == null) {
+            if (transaction.getAmount() <= 200) {
+                checkResult = TransactionStatus.ALLOWED;
+                checkInfo.add("none");
+            } else {
+                checkResult = TransactionStatus.MANUAL_PROCESSING;
+                checkInfo.add("amount");
+            }
+        }
+
         transactionRepository.save(transaction);
+        checkInfo.sort(String::compareTo);
+        return new ResponseEntity<>(new ResponseTransaction(checkResult, String.join(", ", checkInfo)), HttpStatus.OK);
+
+    }
+
+    public ResponseEntity<ResponseTransaction> transaction(RequestTransaction transaction) {
         Enum<TransactionStatus> result;
         List<String> info = new ArrayList<>();
 
@@ -88,6 +167,42 @@ public class TransactionService {
         } else {
             result = TransactionStatus.PROHIBITED;
             info.add("amount");
+        }
+
+        Long transactionsWithDistinctRegionCount =
+                transactionRepository.getTransactionsWithDistinctRegionCount(
+                        transaction.getRegion(),
+                        transaction.getNumber(),
+                        transaction.getDate().minusHours(1),
+                        transaction.getDate()
+                );
+
+        if (transactionsWithDistinctRegionCount > 1) {
+            info.add("region-correlation");
+            info.remove("none");
+            if (transactionsWithDistinctRegionCount == 2) {
+                result = TransactionStatus.MANUAL_PROCESSING;
+            } else {
+                result = TransactionStatus.PROHIBITED;
+            }
+        }
+
+        Long transactionsWithDistinctIpCount =
+                transactionRepository.getTransactionsWithDistinctIpCount(
+                        transaction.getIp(),
+                        transaction.getNumber(),
+                        transaction.getDate().minusHours(1),
+                        transaction.getDate()
+                );
+
+        if (transactionsWithDistinctIpCount > 1) {
+            info.add("ip-correlation");
+            info.remove("none");
+            if (transactionsWithDistinctIpCount == 2) {
+                result = TransactionStatus.MANUAL_PROCESSING;
+            } else {
+                result = TransactionStatus.PROHIBITED;
+            }
         }
 
         IP ip = findIp(transaction.getIp());
@@ -113,6 +228,8 @@ public class TransactionService {
             }
             result = TransactionStatus.PROHIBITED;
         }
+
+        transactionRepository.save(transaction);
 
 
         Collections.sort(info);
