@@ -15,9 +15,24 @@ public class TransactionController {
     @Autowired
     TransactionService transactionService;
 
+    @GetMapping("/history")
+    public ResponseEntity<List<RequestTransaction>> getAllTransactions() {
+        return transactionService.getAllTransaction();
+    }
+
+    @GetMapping("/history/{number}")
+    public ResponseEntity<List<RequestTransaction>> getTransaction(@PathVariable String number) {
+        return transactionService.getTransaction(number);
+    }
+
     @PostMapping("/transaction")
     public ResponseEntity<ResponseTransaction> transaction(@Valid @RequestBody RequestTransaction transaction) {
         return transactionService.transaction(transaction);
+    }
+
+    @PutMapping("/transaction")
+    public ResponseEntity<RequestTransaction> addFeedback(@Valid @RequestBody Feedback feedback) {
+        return transactionService.addFeedback(feedback);
     }
 
     @PostMapping("/suspicious-ip")

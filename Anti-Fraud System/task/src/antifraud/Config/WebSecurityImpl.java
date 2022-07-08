@@ -25,11 +25,15 @@ public class WebSecurityImpl extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .mvcMatchers("/api/antifraud/transaction").hasAuthority("MERCHANT")
+                .mvcMatchers(HttpMethod.PUT,"/api/antifraud/transaction").hasAuthority("SUPPORT")
+                .mvcMatchers(HttpMethod.POST,"/api/antifraud/transaction").hasAuthority("MERCHANT")
 
                 .mvcMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip").hasAnyAuthority("SUPPORT")
                 .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/suspicious-ip/*").hasAnyAuthority("SUPPORT")
                 .mvcMatchers(HttpMethod.GET, "/api/antifraud/suspicious-ip").hasAnyAuthority("SUPPORT")
+
+                .mvcMatchers("/api/antifraud/history").hasAnyAuthority("SUPPORT")
+                .mvcMatchers("/api/antifraud/history/*").hasAnyAuthority("SUPPORT")
 
                 .mvcMatchers(HttpMethod.POST, "/api/antifraud/stolencard").hasAnyAuthority("SUPPORT")
                 .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/stolencard/*").hasAnyAuthority("SUPPORT")

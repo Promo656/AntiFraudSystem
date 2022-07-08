@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<RequestTransaction, Long> {
-    List<RequestTransaction> findTransactionByIp(String ip);
+    List<RequestTransaction> findTransactionByNumber(String number);
 
-    List<RequestTransaction> findTransactionByRegion(String region);
+    RequestTransaction findTransactionByTransactionId(int transactionId);
 
     @Query("SELECT COUNT(DISTINCT t.region) FROM Transaction t WHERE t.region <> ?1 AND t.number = ?2 AND t.date BETWEEN ?3 AND ?4")
     Long getTransactionsWithDistinctRegionCount(

@@ -1,5 +1,6 @@
 package antifraud.Models;
 
+import antifraud.Enums.TransactionStatus;
 import antifraud.Enums.WorldRegion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,7 +20,7 @@ import java.time.LocalDateTime;
 public class RequestTransaction {
     @Id
     @GeneratedValue
-    private int id;
+    private int transactionId;
     @NotNull
     private Long amount;
     @NotEmpty
@@ -30,4 +31,6 @@ public class RequestTransaction {
     private WorldRegion region;
     @NotNull
     private LocalDateTime date;
+    private TransactionStatus result;
+    private String feedback;
 }
