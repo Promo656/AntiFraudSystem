@@ -7,12 +7,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @Service
-public class StolenCardService {
+public class CardService {
     @Autowired
     CardRepository cardRepository;
 
@@ -23,12 +27,22 @@ public class StolenCardService {
         if (!utils.checkCardNumber(card.getNumber())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        Card searchedCard = cardRepository.findCardByNumber(card.getNumber());
-        if (searchedCard == null) {
-            cardRepository.save(new Card(card.getNumber(), true));
-            return new ResponseEntity<>(card, HttpStatus.OK);
+
+        Card searchedCard;
+
+        if (cardRepository.findCardByNumber(card.getNumber()) != null) {
+            if (cardRepository.findCardByNumberAndIsStolenTrue(card.getNumber()) != null) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT);
+            } else {
+                searchedCard = cardRepository.findCardByNumber(card.getNumber());
+                searchedCard.setStolen(true);
+            }
+        } else {
+            searchedCard = new Card(card.getNumber(), true);
         }
-        throw new ResponseStatusException(HttpStatus.CONFLICT);
+
+        cardRepository.save(searchedCard);
+        return new ResponseEntity<>(searchedCard, HttpStatus.OK);
     }
 
     public ResponseEntity<ResponseOperationStatus> deleteCard(String number) {
@@ -45,7 +59,7 @@ public class StolenCardService {
     }
 
     public ResponseEntity<List<Card>> getAllCard() {
-        List<Card> cards = cardRepository.findAll();
+        List<Card> cards = cardRepository.findAllByIsStolenTrue();
         return new ResponseEntity<>(cards, HttpStatus.OK);
     }
 }

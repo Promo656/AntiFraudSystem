@@ -25,6 +25,34 @@ public class TransactionService {
     TransactionStatus result;
     List<String> info = new ArrayList<>();
 
+    private void changeLimit(RequestTransaction transaction, String feedback) {
+        String trResult = transaction.getResult().toString();
+        Card card = cardRepository.findCardByNumber(transaction.getNumber());
+
+        int increasedAllowed = (int) Math.ceil(0.8 * card.getMinLimit() + 0.2 * transaction.getAmount());
+        int decreasedAllowed = (int) Math.ceil(0.8 * card.getMinLimit() - 0.2 * transaction.getAmount());
+        int increasedManual = (int) Math.ceil(0.8 * card.getMaxLimit() + 0.2 * transaction.getAmount());
+        int decreasedManual = (int) Math.ceil(0.8 * card.getMaxLimit() - 0.2 * transaction.getAmount());
+
+        if (feedback.equals("MANUAL_PROCESSING") && trResult.equals("ALLOWED")) {
+            card.setMinLimit(decreasedAllowed);
+        } else if (feedback.equals("PROHIBITED") && trResult.equals("ALLOWED")) {
+            card.setMinLimit(decreasedAllowed);
+            card.setMaxLimit(decreasedManual);
+        } else if (feedback.equals("ALLOWED") && trResult.equals("MANUAL_PROCESSING")) {
+            card.setMinLimit(increasedAllowed);
+        } else if (feedback.equals("PROHIBITED") && trResult.equals("MANUAL_PROCESSING")) {
+            card.setMaxLimit(decreasedManual);
+        } else if (feedback.equals("ALLOWED") && trResult.equals("PROHIBITED")) {
+            card.setMinLimit(increasedAllowed);
+            card.setMaxLimit(increasedManual);
+        } else if (feedback.equals("MANUAL_PROCESSING") && trResult.equals("PROHIBITED")) {
+            card.setMaxLimit(increasedManual);
+        }
+
+        cardRepository.save(card);
+    }
+
     public ResponseEntity<RequestTransaction> addFeedback(Feedback feedback) {
         RequestTransaction transaction = transactionRepository.findTransactionByTransactionId(feedback.getTransactionId());
         if (transaction == null) {
@@ -47,16 +75,18 @@ public class TransactionService {
 
         transaction.setFeedback(feedback.getFeedback());
         transactionRepository.save(transaction);
+        changeLimit(transaction, feedback.getFeedback());
         return new ResponseEntity<>(transaction, HttpStatus.OK);
     }
 
     private void checkAmount(RequestTransaction transaction) {
+        Card card = cardRepository.findCardByNumber(transaction.getNumber());
         if (transaction.getAmount() == null || transaction.getAmount() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        } else if (transaction.getAmount() <= 200) {
+        } else if (transaction.getAmount() <= card.getMinLimit()) {
             result = TransactionStatus.ALLOWED;
             info.add("none");
-        } else if (transaction.getAmount() <= 1500) {
+        } else if (transaction.getAmount() <= card.getMaxLimit()) {
             result = TransactionStatus.MANUAL_PROCESSING;
             info.add("amount");
         } else {
@@ -84,6 +114,25 @@ public class TransactionService {
         }
     }
 
+    private void checkTransactionIpCount(RequestTransaction transaction) {
+        Long transactionsWithDistinctIpCount = transactionRepository
+                .getTransactionsWithDistinctIpCount(
+                        transaction.getIp(),
+                        transaction.getNumber(),
+                        transaction.getDate().minusHours(1),
+                        transaction.getDate());
+
+        if (transactionsWithDistinctIpCount > 1) {
+            info.add("ip-correlation");
+            info.remove("none");
+            if (transactionsWithDistinctIpCount == 2) {
+                result = TransactionStatus.MANUAL_PROCESSING;
+            } else {
+                result = TransactionStatus.PROHIBITED;
+            }
+        }
+    }
+
     private void checkIpBlacklist(RequestTransaction transaction) {
         IP ip = iPsRepository.findByIp(transaction.getIp());
         if (ip != null) {
@@ -98,28 +147,8 @@ public class TransactionService {
         }
     }
 
-    private void checkTransactionIpCount(RequestTransaction transaction) {
-        Long transactionsWithDistinctIpCount = transactionRepository
-                .getTransactionsWithDistinctIpCount(transaction.getIp(), transaction.getNumber(), transaction.getDate().minusHours(1), transaction.getDate());
-
-        if (transactionsWithDistinctIpCount > 1) {
-            info.add("ip-correlation");
-            info.remove("none");
-            if (transactionsWithDistinctIpCount == 2) {
-                result = TransactionStatus.MANUAL_PROCESSING;
-            } else {
-                result = TransactionStatus.PROHIBITED;
-            }
-        }
-    }
-
-    public ResponseEntity<ResponseTransaction> transaction(RequestTransaction transaction) {
-        checkAmount(transaction);
-        checkTransactionRegion(transaction);
-        checkTransactionIpCount(transaction);
-        checkIpBlacklist(transaction);
-
-        Card card = cardRepository.findCardByNumber(transaction.getNumber());
+    private void checkCardBlackList(RequestTransaction transaction) {
+        Card card = cardRepository.findCardByNumberAndIsStolenTrue(transaction.getNumber());
         if (card != null) {
             info.add("card-number");
             info.remove("none");
@@ -130,6 +159,18 @@ public class TransactionService {
             }
             result = TransactionStatus.PROHIBITED;
         }
+    }
+
+    public ResponseEntity<ResponseTransaction> transaction(RequestTransaction transaction) {
+        info.clear();
+        if (cardRepository.findCardByNumber(transaction.getNumber()) == null) {
+            cardRepository.save(new Card(transaction.getNumber(), false));
+        }
+        checkAmount(transaction);
+        checkTransactionRegion(transaction);
+        checkTransactionIpCount(transaction);
+        checkIpBlacklist(transaction);
+        checkCardBlackList(transaction);
 
         transaction.setResult(result);
         transaction.setFeedback("");
